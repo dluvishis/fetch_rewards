@@ -1,6 +1,6 @@
 from collections import Counter
 import re
-dict_to_ignore=[]
+import sys
 
 #get rid of punctuation
 #ignore words in dict_to_ignore
@@ -96,10 +96,19 @@ def main(word1, word2):
 
 
 if __name__ == "__main__":
+  
+
+  
+
+  args = sys.argv
+  
+  if len(args)>2:
+    word1, word2=args[1], args[2]
 
     # execute only if run as a script
-  word1="The easiest way to earn points with Fetch Rewards is to just shop for the products you already love. If you have any participating brands on your receipt, you'll get points based on the cost of the products. You don't need to clip any coupons or scan individual barcodes. Just scan each grocery receipt after you shop and we'll find the savings for you."
-  word2="We are always looking for opportunities for you to earn more points, which is why we also give you a selection of Special Offers. These Special Offers are opportunities to earn bonus points on top of the regular points you earn every time you purchase a participating brand. No need to pre-select these offers, we'll give you the points whether or not you knew about the offer. We just think it is easier that way."
+  #word1="The easiest way to earn points with Fetch Rewards is to just shop for the products you already love. If you have any participating brands on your receipt, you'll get points based on the cost of the products. You don't need to clip any coupons or scan individual barcodes. Just scan each grocery receipt after you shop and we'll find the savings for you."
+  #word2="We are always looking for opportunities for you to earn more points, which is why we also give you a selection of Special Offers. These Special Offers are opportunities to earn bonus points on top of the regular points you earn every time you purchase a participating brand. No need to pre-select these offers, we'll give you the points whether or not you knew about the offer. We just think it is easier that way."
   #word2=word1
+  
   main(word1, word2)
 
