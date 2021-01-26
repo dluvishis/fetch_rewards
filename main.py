@@ -1,114 +1,144 @@
 from collections import Counter
 import re
-import sys
+from flask import Flask, request, jsonify
+from lists_definition import DefineCorpus as dc
 
-#get rid of punctuation
-#ignore words in dict_to_ignore
-#replace words in sinonyms
+app_dic=dc.app_dic
+synonims=dc.synonyms
+exclude=dc.exclude
+punct_remove=dc.punct_remove
 # create counter for unigrams, bigrams and 3-grams 
 # compare same n-grams - get additional points for 3-grams and bigrams
 # divide the number by number of sum of meningful words in both corpus. 
 def clean_text(text):
-    text = text.lower()
-    #foction de replacement
-    app_dic={"i am": "i'm", "you'll": "you will","don't":"do not", "we'll":"we will", "can't":"cannot"}
     
+    ##This funciton cleans input string by replacing words with apostorphe, removing punctuation and replacing synonyms with aliases. 
+    if text is None: return ''
+    text = text.lower()
+    # replace common expessions with apostrophe
+    #get rid of punctuation
+    text = re.sub(punct_remove,"",text)
+        
     for dic in app_dic:
       text = re.sub(dic,app_dic[dic],text)
-    text = re.sub(r"[-()\"#/@;:<>{}=~|.?,]","",text)
-    synonims={'cut out': 'clip', 'products': 'items', 'easiest':'best'}
+    
+
+    
+    #replace synonyms with unique words
+    
     text = ' ' + text + ' '
     for wrd in synonims:
       text=re.sub(' ' + wrd + ' ', ' ' + synonims[wrd]+ ' ', text)
     text=text.strip()
     
-
     return text
 def removePopular(lst):
-  exclude=['the', 'to', 'you', 'any', 'will','do','just', 'and','we', 'a', 'have', 'for', 'is']
-  result = list(filter(lambda word: word not in exclude, lst))
-  return result
+    ##this function removes extraneous words
+    result = list(filter(lambda word: word not in exclude, lst))
+    return result
 
 def getuniquewords(string):
-  return removePopular(clean_text(string).split())
-def sets_compare(lst1, lst2):
-  set1=set(lst1)
-  set2=set(lst2)
-  dif=(set1 - set2) | (set2 - set1)
-  allwords=set1 | set2
-  return 1.0*(len(allwords) - len(dif)) /len(allwords)
-def main(word1, word2):
     
-  unique_words_one=getuniquewords(word1)
-  unique_words_two=getuniquewords(word2)
+    # input is a string of words, output is a list of words from the input string excluding extraneous words
+    return removePopular(clean_text(string).split())
+
+def sets_compare(ct1, ct2):
+    
+    #compare 2 lists and return a score 
+    
+    # difference=items in lst1 not in lst2 and items in lst2 not in lst1
+    # allitems= all items in lst1 or lst2
+    #formula used: (# items in all words - # items in difference) divided by # items in all words
+    # it shows % of items unique to either list. If all items are in both lists, difference is 0, and score=1
+    # if no items are in both lists: difference=all items, and score=0
+    
+    #set1=set(lst1)
+    #set2=set(lst2)
+    ct1=Counter(ct1)
+    ct2=Counter(ct2)
+    st1=Counter({key: max(0 if not key in ct2 else ct2.get(key), value) for key, value in ct1.items()})
+    st2=Counter({key: max(0 if not key in ct1 else ct1.get(key), value) for key, value in ct2.items()})
+    
+    dif=(ct2 - ct1) | (ct1 - ct2)
+    allwords_common=st1&st2
+    
+    dif_len=sum(dif.values())
+    allwords_common_len=sum(allwords_common.values())
+    if (allwords_common_len + dif_len==0): return 0
+    return 1.0*allwords_common_len /(allwords_common_len + dif_len)
+
+def findScore(word1, word2):
+    
+    
+    unique_words_one=getuniquewords(word1)
+    unique_words_two=getuniquewords(word2)
+    
+    
+    
+    unigrams1=dict(Counter(unique_words_one))
+    unigrams2=dict(Counter(unique_words_two))
 
 
 
-  unigrams1=dict(Counter(unique_words_one))
-  unigrams2=dict(Counter(unique_words_two))
+  #find bigrams and trigrams for first string:
+    trigrams_one={}
+    bigrams_one={}
+    if len(unique_words_one)>1:
+        bigrams_one[unique_words_one[0] + ' ' + unique_words_one[1]]=1
+    for i in range(2,len(unique_words_one)):
+        bigram=unique_words_one[i-1] + ' ' + unique_words_one[i]
+        trigram=unique_words_one[i-2] + ' ' + bigram
+        if bigram in bigrams_one:
+            bigrams_one[bigram] +=1
+        else:
+            bigrams_one[bigram] =1
+        if trigram in trigrams_one:
+            trigrams_one[trigram] +=1
+        else:
+            trigrams_one[trigram] =1
+            
+    #find bigrams and trigrams for second string:
+    trigrams_two={}
+    bigrams_two={}
+    if len(unique_words_two)>1:
+        bigrams_two[unique_words_two[0] + ' ' + unique_words_two[1]]=1
+    for i in range(2,len(unique_words_two)):
+        bigram=unique_words_two[i-1] + ' ' + unique_words_two[i]
+        trigram=unique_words_two[i-2] + ' ' + bigram
+        if bigram in bigrams_two:
+            bigrams_two[bigram] +=1
+        else:
+            bigrams_two[bigram] =1
+        if trigram in trigrams_two:
+            trigrams_two[trigram] +=1
+        else:
+            trigrams_two[trigram] =1
+    
+    # find % of unigrams common to both strings    
+    unigrams_only=sets_compare(unigrams1, unigrams2)
+    # find % of bigrams common to both strings
+    bigrams_only=sets_compare(bigrams_one, bigrams_two)
+    # find % of trigrams common to both strings
+    trigrams_only=sets_compare(trigrams_one, trigrams_two)
+    
+    # if strings are the same, all 3 scores will be 
+    
+    final_score=unigrams_only *0.5 + bigrams_only*0.33 + trigrams_only * 0.17
+    #print ('same words: {}'.format(unigrams_only * 100 ))
+    return ('final score: {}'.format(final_score))
 
 
 
-  #find bigrams and trigrams:
-  trigrams_one={}
-  bigrams_one={}
-  if len(unique_words_one)>1:
-    bigrams_one[unique_words_one[0] + ' ' + unique_words_one[1]]=1
-  for i in range(2,len(unique_words_one)):
-    bigram=unique_words_one[i-1] + ' ' + unique_words_one[i]
-    trigram=unique_words_one[i-2] + ' ' + bigram
-    if bigram in bigrams_one:
-      bigrams_one[bigram] +=1
-    else:
-      bigrams_one[bigram] =1
-    if trigram in trigrams_one:
-      trigrams_one[trigram] +=1
-    else:
-      trigrams_one[trigram] =1
+app = Flask(__name__)
 
-  trigrams_two={}
-  bigrams_two={}
-  if len(unique_words_two)>1:
-    bigrams_two[unique_words_two[0] + ' ' + unique_words_two[1]]=1
-  for i in range(2,len(unique_words_two)):
-    bigram=unique_words_two[i-1] + ' ' + unique_words_two[i]
-    trigram=unique_words_two[i-2] + ' ' + bigram
-    if bigram in bigrams_two:
-      bigrams_two[bigram] +=1
-    else:
-      bigrams_two[bigram] =1
-    if trigram in trigrams_two:
-      trigrams_two[trigram] +=1
-    else:
-      trigrams_two[trigram] =1
+@app.route('/main_findScore', methods=["GET","POST"])
+def main_findScore():
 
-  unigrams_only=sets_compare(unigrams1, unigrams2)
-  bigrams_only=sets_compare(bigrams_one, bigrams_two)
-  trigrams_only=sets_compare(trigrams_one, trigrams_two)
-  
-  final_score=unigrams_only *0.5 + bigrams_only*0.33 + trigrams_only * 0.17
-  #print ('same words: {}'.format(unigrams_only * 100 ))
-  print ('final score: {}'.format(final_score))
-
-
-
-
+     word1=  request.form.get('word1')
+     word2=  request.form.get('word2')
+     return jsonify({'result': findScore(word1, word2), 'msg': 'success'})
 
 
 if __name__ == "__main__":
-  
-
-  
-
-  args = sys.argv
-  
-  if len(args)>2:
-    word1, word2=args[1], args[2]
-
-    # execute only if run as a script
-  #word1="The easiest way to earn points with Fetch Rewards is to just shop for the products you already love. If you have any participating brands on your receipt, you'll get points based on the cost of the products. You don't need to clip any coupons or scan individual barcodes. Just scan each grocery receipt after you shop and we'll find the savings for you."
-  #word2="We are always looking for opportunities for you to earn more points, which is why we also give you a selection of Special Offers. These Special Offers are opportunities to earn bonus points on top of the regular points you earn every time you purchase a participating brand. No need to pre-select these offers, we'll give you the points whether or not you knew about the offer. We just think it is easier that way."
-  #word2=word1
-  
-  main(word1, word2)
+    app.run(port=1234, debug=True)
 
