@@ -65,7 +65,7 @@ This should start web service http://127.0.0.1:1234/main_findScore on your machi
 
 To test web service in a separate command line run:
 python test_request.py It contains Post request to http://127.0.0.1:1234/main_findScore with 2 variables word1 and word2
-Responce will contain final score in the format: "final score: ____".
+Response will contain final score in the format: "final score: ____".
 
 ### Corpus
 
