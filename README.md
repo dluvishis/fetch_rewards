@@ -34,8 +34,9 @@ In order to compare similarity of 2 texts we need to compare semantic meaning of
     We are creating 3 separate lists for both texts which will include all unigrams, bigrams, trigrams.
 
 3. Score calculation 
+
     Score Calculation is based on lists comparision separately for unigrams, bigrams and trigrams. 
-    Comparission score between 2 lists lst1 and lst2 is calculated using this formulae:
+    Comparison score between 2 lists lst1 and lst2 is calculated using this formulae:
 
     **Score= (Num_allitems - Num_dif)/Num_allitems**
 
