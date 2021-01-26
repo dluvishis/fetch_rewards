@@ -13,15 +13,19 @@ In order to compare similarity of 2 texts we need to compare semantic meaning of
 
 1. Cleaning
     * Punctuation
+    
         Get Rid of Punctuation
     * Abbreviation
+    
         Replace Abbreviation ("I've" will become "I have" etc)
     * Synonyms
+    
         Replace Synonyms with Aliases ("cut out" is replaced with "clip" etc)
     * Extraneous words
+    
         Remove words with no additional meaning - the, to etc
     
-    Depending on the corpus the 4 lists or dictionaries can be different, which is especially true for Synonymes. For example, word "point" can be replaced with "reward" in the example provided but it won't be correct in other cases. Knowing the corpus is important to this exercise. 
+    Depending on the corpus the 4 lists or dictionaries can be different, which is especially true for Synonyms. For example, word "point" can be replaced with "reward" in the example provided but it won't be correct in other cases. Knowing the corpus is important to this exercise. 
 
 2.  Lists with all unigrams, bigrams and trigrams
 
