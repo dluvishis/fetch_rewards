@@ -1,0 +1,11 @@
+service: sls-ci-cd
+provider:
+  name: aws
+  runtime: nodejs12.x
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          path: check
+          method: get
