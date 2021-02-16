@@ -1,0 +1,11 @@
+phases:
+  install:
+    commands:
+      - npm install
+      - npm install -g serverless
+  pre_build:
+    commands:
+      - sls invoke test
+  build:
+    commands:
+      - sls deploy
